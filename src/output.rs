@@ -1,10 +1,11 @@
 use crate::signal::Signal;
+use anyhow::{Error, Result};
 use cpal::{
   traits::{DeviceTrait, HostTrait, StreamTrait},
   FromSample, Sample, SizedSample,
 };
 
-pub fn begin(signal: Box<dyn Signal>) -> anyhow::Result<()> {
+pub fn begin(signal: Box<dyn Signal>) -> Result<()> {
   let host = cpal::default_host();
 
   let device = host
@@ -38,7 +39,7 @@ pub fn run<T>(
   device: &cpal::Device,
   config: &cpal::StreamConfig,
   mut signal: Box<dyn Signal>,
-) -> Result<(), anyhow::Error>
+) -> Result<(), Error>
 where
   T: SizedSample + FromSample<f32>,
 {

@@ -17,28 +17,49 @@ impl Signal for Nil {
   }
 }
 
-pub struct WithFrequency<S: Signal> {
-  child: S,
+#[derive(Debug, Clone)]
+pub struct Tuned<S: Signal> {
   freq: f64,
+  child: S,
 }
 
-impl<S: Signal> WithFrequency<S> {
-  pub fn new(child: S, freq: f64) -> Self {
-    WithFrequency::<S> { freq, child }
+impl<S: Signal> Tuned<S> {
+  pub fn new(freq: f64, child: S) -> Self {
+    Tuned::<S> { freq, child }
   }
 }
 
-impl<S: Signal> Signal for WithFrequency<S> {
+impl<S: Signal> Signal for Tuned<S> {
   fn sample(&mut self, t: f64) -> f64 {
     self.child.sample(t * self.freq)
   }
 }
 
+#[derive(Debug, Clone)]
+pub struct Scaled<S: Signal> {
+  scale: f64,
+  child: S,
+}
+
+impl<S: Signal> Scaled<S> {
+  pub fn new(scale: f64, child: S) -> Self {
+    Scaled::<S> { scale, child }
+  }
+}
+
+impl<S: Signal> Signal for Scaled<S> {
+  fn sample(&mut self, t: f64) -> f64 {
+    self.scale * self.child.sample(t)
+  }
+}
+
+#[derive(Debug, Clone)]
 pub enum WavetableSampleStrategy {
   Linear,
   Quadratic,
 }
 
+#[derive(Debug, Clone)]
 pub struct Wavetabled<S: Signal> {
   child: S,
   table: Vec<f64>,
@@ -46,26 +67,19 @@ pub struct Wavetabled<S: Signal> {
 }
 
 impl<S: Signal> Wavetabled<S> {
-  pub fn new_with(
-    mut child: S,
-    resolution: usize,
-    strategy: WavetableSampleStrategy,
-  ) -> Self {
+  pub fn new(resolution: usize, mut child: S) -> Self {
     let table = (0..resolution)
       .map(|i| child.sample((i as f64) / (resolution as f64)))
       .collect();
     Wavetabled::<S> {
       child,
       table,
-      strategy,
+      strategy: WavetableSampleStrategy::Quadratic,
     }
   }
-  pub fn new(child: S) -> Self {
-    Self::new_with(
-      child,
-      DEFAULT_WAVETABLE_RESOLUTION,
-      WavetableSampleStrategy::Quadratic,
-    )
+  pub fn with_strategy(mut self, strategy: WavetableSampleStrategy) -> Self {
+    self.strategy = strategy;
+    self
   }
 }
 
@@ -97,6 +111,7 @@ impl<S: Signal> Signal for Wavetabled<S> {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct ToUni<S: Signal> {
   child: S,
 }
@@ -113,6 +128,7 @@ impl<S: Signal> Signal for ToUni<S> {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct FromUni<S: Signal> {
   child: S,
 }

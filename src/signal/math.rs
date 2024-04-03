@@ -1,5 +1,6 @@
 use crate::Signal;
 
+#[derive(Debug, Clone)]
 pub struct Product<S1: Signal, S2: Signal> {
   child_1: S1,
   child_2: S2,
@@ -17,6 +18,7 @@ impl<S1: Signal, S2: Signal> Signal for Product<S1, S2> {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct MultiProduct<S: Signal> {
   children: Vec<S>,
 }
@@ -37,6 +39,7 @@ impl<S: Signal> Signal for MultiProduct<S> {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct Sum<S1: Signal, S2: Signal> {
   child_1: S1,
   child_2: S2,
@@ -54,6 +57,7 @@ impl<S1: Signal, S2: Signal> Signal for Sum<S1, S2> {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct MultiSum<S: Signal> {
   children: Vec<S>,
 }

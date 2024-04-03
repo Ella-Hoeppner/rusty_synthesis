@@ -39,7 +39,7 @@ pub fn run<T>(
   device: &cpal::Device,
   config: &cpal::StreamConfig,
   mut signal: Box<dyn Signal>,
-) -> Result<(), Error>
+) -> Result<()>
 where
   T: SizedSample + FromSample<f32>,
 {

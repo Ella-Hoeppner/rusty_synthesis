@@ -3,7 +3,7 @@ use crate::Signal;
 const TAU: f64 = 2.0 * std::f64::consts::PI;
 
 #[derive(Debug, Clone)]
-pub struct Sin();
+pub struct Sin;
 impl Signal for Sin {
   fn sample(&mut self, t: f64) -> f64 {
     (t * TAU).sin()
@@ -11,7 +11,7 @@ impl Signal for Sin {
 }
 
 #[derive(Debug, Clone)]
-pub struct Saw {}
+pub struct Saw;
 impl Signal for Saw {
   fn sample(&mut self, t: f64) -> f64 {
     (t % 1.) * 2. - 1.
@@ -19,7 +19,7 @@ impl Signal for Saw {
 }
 
 #[derive(Debug, Clone)]
-pub struct Square {}
+pub struct Square;
 impl Signal for Square {
   fn sample(&mut self, t: f64) -> f64 {
     if (t % 1.) > 0.5 {
@@ -31,7 +31,7 @@ impl Signal for Square {
 }
 
 #[derive(Debug, Clone)]
-pub struct Tri {}
+pub struct Tri;
 impl Signal for Tri {
   fn sample(&mut self, t: f64) -> f64 {
     let x = t % 1.;

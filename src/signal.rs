@@ -1,5 +1,7 @@
 pub mod combinations;
 pub mod core;
+pub mod envelope;
+pub mod filter;
 pub mod math;
 pub mod midi;
 pub mod modulation;

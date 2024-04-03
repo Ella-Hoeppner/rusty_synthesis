@@ -60,19 +60,21 @@ pub enum WavetableSampleStrategy {
 }
 
 #[derive(Debug, Clone)]
-pub struct Wavetabled<S: Signal> {
+pub struct Table<S: Signal> {
   child: S,
+  length: f64,
   table: Vec<f64>,
   strategy: WavetableSampleStrategy,
 }
 
-impl<S: Signal> Wavetabled<S> {
-  pub fn new(resolution: usize, mut child: S) -> Self {
+impl<S: Signal> Table<S> {
+  pub fn new(length: f64, resolution: usize, mut child: S) -> Self {
     let table = (0..resolution)
-      .map(|i| child.sample((i as f64) / (resolution as f64)))
+      .map(|i| child.sample(length * (i as f64) / (resolution as f64)))
       .collect();
-    Wavetabled::<S> {
+    Table::<S> {
       child,
+      length,
       table,
       strategy: WavetableSampleStrategy::Quadratic,
     }
@@ -83,10 +85,10 @@ impl<S: Signal> Wavetabled<S> {
   }
 }
 
-impl<S: Signal> Signal for Wavetabled<S> {
+impl<S: Signal> Signal for Table<S> {
   fn sample(&mut self, t: f64) -> f64 {
-    let t = t % 1.;
-    let i = self.table.len() as f64 * t;
+    let x = (t / self.length) % 1.;
+    let i = self.table.len() as f64 * x;
     let i_floored = i.floor() as usize;
     let p = i % 1.;
     match self.strategy {

@@ -1,8 +1,5 @@
-use crate::Signal;
-
-fn mix(a: f64, b: f64, p: f64) -> f64 {
-  a * (1.0 - p) + b * p
-}
+use crate::util::mix;
+use crate::{derive_signal_ops, Signal};
 
 pub enum ADSRState {
   Off,
@@ -20,6 +17,7 @@ pub struct ADSR<S: Signal> {
   state: ADSRState,
   gate: S,
 }
+derive_signal_ops!(ADSR<S: Signal>);
 use ADSRState::*;
 
 impl<S: Signal> ADSR<S> {

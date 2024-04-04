@@ -1,55 +1,29 @@
-use crate::Signal;
-
-const DEFAULT_WAVETABLE_RESOLUTION: usize = 10000;
+use crate::{derive_signal_ops, Signal};
 
 #[derive(Debug, Clone)]
-pub struct Nil {}
-
-impl Nil {
-  pub fn new() -> Self {
-    Nil {}
-  }
-}
-
-impl Signal for Nil {
+pub struct Const(pub f64);
+derive_signal_ops!(Const);
+impl Signal for Const {
   fn sample(&mut self, _t: f64) -> f64 {
-    0.
+    self.0
   }
 }
 
 #[derive(Debug, Clone)]
-pub struct Tuned<S: Signal> {
-  freq: f64,
-  child: S,
-}
-
-impl<S: Signal> Tuned<S> {
-  pub fn new(freq: f64, child: S) -> Self {
-    Tuned::<S> { freq, child }
-  }
-}
-
+pub struct Tuned<S: Signal>(pub f64, pub S);
+derive_signal_ops!(Tuned<S: Signal>);
 impl<S: Signal> Signal for Tuned<S> {
   fn sample(&mut self, t: f64) -> f64 {
-    self.child.sample(t * self.freq)
+    self.1.sample(t * self.0)
   }
 }
 
 #[derive(Debug, Clone)]
-pub struct Scaled<S: Signal> {
-  scale: f64,
-  child: S,
-}
-
-impl<S: Signal> Scaled<S> {
-  pub fn new(scale: f64, child: S) -> Self {
-    Scaled::<S> { scale, child }
-  }
-}
-
+pub struct Scaled<S: Signal>(pub f64, pub S);
+derive_signal_ops!(Scaled<S: Signal>);
 impl<S: Signal> Signal for Scaled<S> {
   fn sample(&mut self, t: f64) -> f64 {
-    self.scale * self.child.sample(t)
+    self.0 * self.1.sample(t)
   }
 }
 
@@ -66,6 +40,7 @@ pub struct Table<S: Signal> {
   table: Vec<f64>,
   strategy: WavetableSampleStrategy,
 }
+derive_signal_ops!(Table<S: Signal>);
 
 impl<S: Signal> Table<S> {
   pub fn new(length: f64, resolution: usize, mut child: S) -> Self {
@@ -114,35 +89,19 @@ impl<S: Signal> Signal for Table<S> {
 }
 
 #[derive(Debug, Clone)]
-pub struct ToUni<S: Signal> {
-  child: S,
-}
-
-impl<S: Signal> ToUni<S> {
-  pub fn new(child: S) -> Self {
-    ToUni::<S> { child }
-  }
-}
-
+pub struct ToUni<S: Signal>(pub S);
+derive_signal_ops!(ToUni<S: Signal>);
 impl<S: Signal> Signal for ToUni<S> {
   fn sample(&mut self, t: f64) -> f64 {
-    (self.child.sample(t) + 1.) * 0.5
+    (self.0.sample(t) + 1.) * 0.5
   }
 }
 
 #[derive(Debug, Clone)]
-pub struct FromUni<S: Signal> {
-  child: S,
-}
-
-impl<S: Signal> FromUni<S> {
-  pub fn new(child: S) -> Self {
-    FromUni::<S> { child }
-  }
-}
-
+pub struct FromUni<S: Signal>(pub S);
+derive_signal_ops!(FromUni<S: Signal>);
 impl<S: Signal> Signal for FromUni<S> {
   fn sample(&mut self, t: f64) -> f64 {
-    (self.child.sample(t) * 2.) - 1.
+    (self.0.sample(t) * 2.) - 1.
   }
 }

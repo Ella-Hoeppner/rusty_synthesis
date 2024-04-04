@@ -1,75 +1,37 @@
-use crate::Signal;
+use crate::{derive_signal_ops, Signal};
 
 #[derive(Debug, Clone)]
-pub struct Product<S1: Signal, S2: Signal> {
-  child_1: S1,
-  child_2: S2,
-}
-
-impl<S1: Signal, S2: Signal> Product<S1, S2> {
-  pub fn new(child_1: S1, child_2: S2) -> Self {
-    Product::<S1, S2> { child_1, child_2 }
-  }
-}
-
+pub struct Product<S1: Signal, S2: Signal>(pub S1, pub S2);
+derive_signal_ops!(Product<S1:Signal, S2: Signal>);
 impl<S1: Signal, S2: Signal> Signal for Product<S1, S2> {
   fn sample(&mut self, t: f64) -> f64 {
-    self.child_1.sample(t) * self.child_2.sample(t)
+    self.0.sample(t) * self.1.sample(t)
   }
 }
 
 #[derive(Debug, Clone)]
-pub struct MultiProduct<S: Signal> {
-  children: Vec<S>,
-}
-
-impl<S: Signal> MultiProduct<S> {
-  pub fn new(children: Vec<S>) -> Self {
-    MultiProduct::<S> { children }
-  }
-}
-
+pub struct MultiProduct<S: Signal>(pub Vec<S>);
+derive_signal_ops!(MultiProduct<S:Signal>);
 impl<S: Signal> Signal for MultiProduct<S> {
   fn sample(&mut self, t: f64) -> f64 {
-    self
-      .children
-      .iter_mut()
-      .map(|child| child.sample(t))
-      .product()
+    self.0.iter_mut().map(|child| child.sample(t)).product()
   }
 }
 
 #[derive(Debug, Clone)]
-pub struct Sum<S1: Signal, S2: Signal> {
-  child_1: S1,
-  child_2: S2,
-}
-
-impl<S1: Signal, S2: Signal> Sum<S1, S2> {
-  pub fn new(child_1: S1, child_2: S2) -> Self {
-    Sum::<S1, S2> { child_1, child_2 }
-  }
-}
-
+pub struct Sum<S1: Signal, S2: Signal>(pub S1, pub S2);
+derive_signal_ops!(Sum<S1:Signal, S2: Signal>);
 impl<S1: Signal, S2: Signal> Signal for Sum<S1, S2> {
   fn sample(&mut self, t: f64) -> f64 {
-    self.child_1.sample(t) + self.child_2.sample(t)
+    self.0.sample(t) + self.1.sample(t)
   }
 }
 
 #[derive(Debug, Clone)]
-pub struct MultiSum<S: Signal> {
-  children: Vec<S>,
-}
-
-impl<S: Signal> MultiSum<S> {
-  pub fn new(children: Vec<S>) -> Self {
-    MultiSum::<S> { children }
-  }
-}
-
+pub struct MultiSum<S: Signal>(pub Vec<S>);
+derive_signal_ops!(MultiSum<S:Signal>);
 impl<S: Signal> Signal for MultiSum<S> {
   fn sample(&mut self, t: f64) -> f64 {
-    self.children.iter_mut().map(|child| child.sample(t)).sum()
+    self.0.iter_mut().map(|child| child.sample(t)).sum()
   }
 }

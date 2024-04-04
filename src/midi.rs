@@ -12,6 +12,8 @@ use midir::{Ignore, MidiInput, MidiInputConnection};
 pub enum MidiEvent {
   NoteDown(u8),
   NoteUp(u8),
+  ModWheel(f64),
+  PitchBend(f64),
 }
 
 impl MidiEvent {
@@ -22,9 +24,17 @@ impl MidiEvent {
       let channel = status & 0x0F;
       let note = bytes[1];
       match command {
+        14 => Some(Self::PitchBend(((bytes[2] as f64) / 127.) * 2. - 1.)),
+        11 => Some(Self::ModWheel(bytes[2] as f64 / 127.)),
         9 => Some(Self::NoteDown(note)),
         8 => Some(Self::NoteUp(note)),
-        _ => None,
+        _ => {
+          println!(
+            "unrecognized midi message: command = {:?}, bytes = {:?}",
+            command, bytes
+          );
+          None
+        }
       }
     } else {
       None
@@ -40,12 +50,16 @@ pub struct NoteState {
 #[derive(Debug)]
 pub struct MidiLedger {
   pub notes: HashMap<u8, NoteState>,
+  pub mod_wheel: f64,
+  pub pitch_bend: f64,
 }
 
 impl MidiLedger {
   pub fn new() -> Self {
     Self {
       notes: HashMap::new(),
+      mod_wheel: 0.5,
+      pitch_bend: 0.,
     }
   }
   pub fn create() -> Arc<Mutex<Self>> {
@@ -54,7 +68,7 @@ impl MidiLedger {
 }
 
 pub struct MidiListener {
-  ledger: Arc<Mutex<MidiLedger>>,
+  pub ledger: Arc<Mutex<MidiLedger>>,
   input_connection: MidiInputConnection<Arc<Mutex<MidiLedger>>>,
 }
 
@@ -107,10 +121,14 @@ impl MidiListener {
               MidiEvent::NoteUp(note) => {
                 ledger.notes.insert(note, NoteState { down: false });
               }
+              MidiEvent::ModWheel(value) => {
+                ledger.mod_wheel = value;
+              }
+              MidiEvent::PitchBend(value) => {
+                ledger.pitch_bend = value;
+              }
             }
             println!("{:?}: {:?}", event, message);
-          } else {
-            println!("unrecognized midi message:: {:?}", message);
           }
         },
         ledger.clone(),
@@ -126,8 +144,5 @@ impl MidiListener {
       ledger,
       input_connection,
     })
-  }
-  pub fn get_ledger(&self) -> Arc<Mutex<MidiLedger>> {
-    self.ledger.clone()
   }
 }

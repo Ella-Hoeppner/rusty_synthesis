@@ -1,28 +1,15 @@
-use crate::Signal;
+use crate::{derive_signal_ops, Signal};
 
 #[derive(Debug, Clone)]
-pub struct PhaseMod<C: Signal, M: Signal> {
-  carrier: C,
-  modulator: M,
-}
-
-impl<C: Signal, M: Signal> PhaseMod<C, M> {
-  pub fn new(carrier: C, modulator: M) -> Self {
-    PhaseMod { carrier, modulator }
-  }
-}
-
+pub struct PhaseMod<C: Signal, M: Signal>(pub M, pub C);
+derive_signal_ops!(PhaseMod<C: Signal, M: Signal>);
 impl<C: Signal + Clone, M: Signal> PhaseMod<C, M> {
   pub fn with_self<F: Fn(C) -> M>(carrier: C, f: F) -> Self {
-    Self {
-      carrier: carrier.clone(),
-      modulator: f(carrier),
-    }
+    Self(f(carrier.clone()), carrier)
   }
 }
-
 impl<C: Signal, M: Signal> Signal for PhaseMod<C, M> {
   fn sample(&mut self, t: f64) -> f64 {
-    self.carrier.sample(t + self.modulator.sample(t))
+    self.1.sample(t + self.0.sample(t))
   }
 }

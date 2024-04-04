@@ -1,41 +1,72 @@
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use crate::derive_signal_ops;
 use crate::Signal;
 
 use crate::MidiLedger;
 
 #[derive(Debug, Clone)]
-pub struct MidiNoteSignal {
+pub struct MidiNote {
   note: u8,
   ledger: Arc<Mutex<MidiLedger>>,
-  on: bool,
 }
-impl MidiNoteSignal {
-  pub fn new(note: u8, ledger: Arc<Mutex<MidiLedger>>) -> Self {
+derive_signal_ops!(MidiNote);
+impl MidiNote {
+  pub fn new(note: u8, ledger: &Arc<Mutex<MidiLedger>>) -> Self {
     Self {
       note,
-      on: false,
-      ledger,
+      ledger: ledger.clone(),
     }
-  }
-  pub fn update_from_ledger(&mut self) {
-    let ledger = self.ledger.lock().unwrap();
-    self.on = ledger
-      .notes
-      .get(&self.note)
-      .map(|note| note.down)
-      .unwrap_or(false);
   }
 }
 
-impl Signal for MidiNoteSignal {
+impl Signal for MidiNote {
   fn sample(&mut self, _t: f64) -> f64 {
-    self.update_from_ledger();
-    if self.on {
+    let ledger = self.ledger.lock().unwrap();
+    if ledger
+      .notes
+      .get(&self.note)
+      .map(|note| note.down)
+      .unwrap_or(false)
+    {
       1.
     } else {
       0.
     }
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct MidiModWheel {
+  ledger: Arc<Mutex<MidiLedger>>,
+}
+derive_signal_ops!(MidiModWheel);
+impl MidiModWheel {
+  pub fn new(ledger: &Arc<Mutex<MidiLedger>>) -> Self {
+    Self {
+      ledger: ledger.clone(),
+    }
+  }
+}
+impl Signal for MidiModWheel {
+  fn sample(&mut self, _t: f64) -> f64 {
+    self.ledger.lock().unwrap().mod_wheel
+  }
+}
+
+#[derive(Debug, Clone)]
+pub struct MidiPitchBend {
+  ledger: Arc<Mutex<MidiLedger>>,
+}
+derive_signal_ops!(MidiPitchBend);
+impl MidiPitchBend {
+  pub fn new(ledger: Arc<Mutex<MidiLedger>>) -> Self {
+    Self { ledger }
+  }
+}
+impl Signal for MidiPitchBend {
+  fn sample(&mut self, _t: f64) -> f64 {
+    self.ledger.lock().unwrap().pitch_bend
   }
 }

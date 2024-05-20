@@ -1,63 +1,68 @@
 mod midi;
 mod output;
 mod signal;
+mod synths;
 mod util;
 
 use midi::*;
 use signal::{
   combinations::*, compress::*, core::*, envelope::*, filter::*, math::*,
-  midi::*, modulation::*, osc::*, *,
+  midi::*, modulation::*, osc::*, sequence::*, shaping::*, *,
 };
+use synths::*;
 use util::*;
 
 fn main() {
   let midi = MidiListener::start().unwrap();
-  let notes: Vec<_> = (41..=72)
-    .map(|note_index| {
-      let note_frequency = ((note_index - 41) as f64 / 12.).exp2();
-      let envelope = Cached::new(ADSR::new(
-        0.1,
-        0.1,
-        0.11,
-        0.35,
-        MidiNote::new(note_index, &midi.ledger),
-      ));
-      (
-        envelope,
-        //Tuned(440. * note_frequency, Sin),
-        //Tuned(440. * note_frequency, Pure(|a| (a % 1.) * 2. - 1.)),
-        /*DynamicOnePoleLowPass::new(
-          Modified(|x| 0.1f64.powf(1. - x), MidiModWheel::new(&midi.ledger)),
-          (90. * note_frequency)
-            >> PhaseMod::with_self(
-              PhaseMod::with_self(
-                PhaseMod::with_self(
-                  DetunedSum::random(Tri, 3, 0.025),
-                  |s: DetunedSum<Tri>| 0.035 * (4. >> s),
+  let full_polyphony_signal = Sigmoid(Sum(
+    0.0
+      * Product(
+        Sigmoid(
+          6. * Wavefold(
+            8. * OnePoleLowPass::new(
+              Modified(
+                move |x| 0.001f64.powf(1. - x),
+                MidiModWheel::new(&midi.ledger),
+              ),
+              10.
+                >> DetunedSum::random_const(
+                  (0.5 * (2. >> ((3. >> (0.25 * Tri)) >> Sin))) >> Saw,
+                  16,
+                  0.0035,
                 ),
-                |s| 0.025 * (1.5 >> s),
-              ),
-              |s| 0.1 * (2. >> s),
             ),
-        ),*/
-        Const(0.)
-          >> DynamicOnePoleLowPass::new(
-            Modified(|x| 0.01f64.powf(1. - x), MidiModWheel::new(&midi.ledger)),
-            (90. * note_frequency)
-              >> DetunedSum::<
-                PhaseMod<Saw, Tuned<PhaseMod<Sin, Tuned<Scaled<Tri>>>>>,
-              >::random(
-                (2. >> ((3. >> (0.75 * Tri)) >> Sin)) >> Saw, 8, 0.01
-              ),
           ),
-      )
-    })
-    .collect();
-  let full_polyphony_signal = Sigmoid(
-    VoiceAllocator::new(notes, 4),
-    /*MultiSum(
-      notes.into_iter().map(|(e, v)| Product(e, v)).collect(),
-    )*/
-  );
+        ),
+        AttackExpDecay::new(Const(0.001), Const(24.), Beat::new(0.5, 0.)),
+      ),
+    EnvelopedVoiceAllocator::new(
+      8,
+      (41..=72)
+        .map(|note_index| {
+          let note_frequency = ((note_index as f64 - 42.) / 12.).exp2();
+          let envelope = Cached::new(
+            ADSR::constant(
+              0.05,
+              0.05,
+              0.25,
+              0.2,
+              MidiNote::new(note_index, &midi.ledger),
+            ),
+            /*AttackExpDecay::new(
+              0.001,
+              12.,
+              MidiNote::new(note_index, &midi.ledger),
+            ),*/
+          );
+          (
+            envelope,
+            meta_self_phase_mod_keys(note_frequency, &midi),
+            //bwaaa_distorted_phase_mod(note_frequency, &midi),
+            //distorted_fmod_keys(note_frequency, &midi),
+          )
+        })
+        .collect(),
+    ),
+  ));
   output::begin(Box::new(full_polyphony_signal)).unwrap();
 }

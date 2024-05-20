@@ -8,6 +8,11 @@ impl Signal for Const {
     self.0
   }
 }
+impl From<f64> for Const {
+  fn from(x: f64) -> Self {
+    Const(x)
+  }
+}
 
 #[derive(Debug, Clone)]
 pub struct Tuned<S: Signal>(pub f64, pub S);

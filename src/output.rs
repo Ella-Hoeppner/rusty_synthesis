@@ -46,15 +46,10 @@ where
   let sample_rate = config.sample_rate.0 as f64;
   let channels = config.channels as usize;
 
-  // Produce a sinusoid of maximum amplitude.
   let mut sample_counter = 0f64;
   let mut next_value = move || {
     sample_counter = sample_counter + 1.0;
     signal.sample(sample_counter / sample_rate) as f32
-    /*(
-      (sample_clock * 440.0 / sample_rate) % 1.,
-    ) * 2.
-      - 1.*/
   };
 
   let err_fn = |err| eprintln!("an error occurred on stream: {}", err);

@@ -9,6 +9,9 @@ pub mod math;
 pub mod midi;
 pub mod modulation;
 pub mod osc;
+pub mod sequence;
+pub mod shaping;
+pub mod waveguide;
 
 pub trait Signal: Send {
   fn sample(&mut self, t: f64) -> f64;

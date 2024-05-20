@@ -35,12 +35,16 @@ impl Signal for Square {
   }
 }
 
+pub fn tri(mut x: f64) -> f64 {
+  x %= 1.;
+  4. * x.min((0.5 - x).max(x - 1.))
+}
+
 #[derive(Debug, Clone)]
 pub struct Tri;
 derive_signal_ops!(Tri);
 impl Signal for Tri {
   fn sample(&mut self, t: f64) -> f64 {
-    let x = t % 1.;
-    4. * x.min((0.5 - x).max(x - 1.))
+    tri(t)
   }
 }

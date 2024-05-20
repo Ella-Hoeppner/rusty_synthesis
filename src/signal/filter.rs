@@ -1,13 +1,13 @@
 use crate::{derive_signal_ops, Signal};
 
-pub struct OnePoleLowPass<S: Signal> {
-  pub a0: f64,
+pub struct OnePoleLowPass<A: Signal, S: Signal> {
+  pub a0: A,
   pub last_value: f64,
   pub child: S,
 }
-derive_signal_ops!(OnePoleLowPass<S: Signal>);
-impl<S: Signal> OnePoleLowPass<S> {
-  pub fn new(a0: f64, child: S) -> Self {
+derive_signal_ops!(OnePoleLowPass<A:Signal, S: Signal>);
+impl<A: Signal, S: Signal> OnePoleLowPass<A, S> {
+  pub fn new(a0: A, child: S) -> Self {
     OnePoleLowPass {
       a0,
       last_value: 0.,
@@ -16,34 +16,9 @@ impl<S: Signal> OnePoleLowPass<S> {
   }
 }
 
-impl<S: Signal> Signal for OnePoleLowPass<S> {
+impl<A: Signal, S: Signal> Signal for OnePoleLowPass<A, S> {
   fn sample(&mut self, t: f64) -> f64 {
-    let value =
-      self.a0 * self.child.sample(t) + (1. - self.a0) * self.last_value;
-    self.last_value = value;
-    value
-  }
-}
-
-pub struct DynamicOnePoleLowPass<C: Signal, S: Signal> {
-  pub cutoff: C,
-  pub last_value: f64,
-  pub child: S,
-}
-derive_signal_ops!(DynamicOnePoleLowPass<C:Signal, S: Signal>);
-impl<C: Signal, S: Signal> DynamicOnePoleLowPass<C, S> {
-  pub fn new(cutoff: C, child: S) -> Self {
-    DynamicOnePoleLowPass {
-      cutoff,
-      last_value: 0.,
-      child,
-    }
-  }
-}
-
-impl<C: Signal, S: Signal> Signal for DynamicOnePoleLowPass<C, S> {
-  fn sample(&mut self, t: f64) -> f64 {
-    let a0 = self.cutoff.sample(t);
+    let a0 = self.a0.sample(t);
     let value = a0 * self.child.sample(t) + (1. - a0) * self.last_value;
     self.last_value = value;
     value

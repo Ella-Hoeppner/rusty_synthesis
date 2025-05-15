@@ -3,42 +3,7 @@ use crate::{signal::*, *};
 pub fn meta_self_phase_mod_keys(
   frequency: f64,
   midi_listener: &MidiListener,
-) -> OnePoleLowPass<
-  Modified<impl Fn(f64) -> f64, MidiModWheel>,
-  Tuned<
-    PhaseMod<
-      PhaseMod<
-        PhaseMod<DetunedSum<Const, Tri>, Scaled<Tuned<DetunedSum<Const, Tri>>>>,
-        Scaled<
-          Tuned<
-            PhaseMod<
-              DetunedSum<Const, Tri>,
-              Scaled<Tuned<DetunedSum<Const, Tri>>>,
-            >,
-          >,
-        >,
-      >,
-      Scaled<
-        Tuned<
-          PhaseMod<
-            PhaseMod<
-              DetunedSum<Const, Tri>,
-              Scaled<Tuned<DetunedSum<Const, Tri>>>,
-            >,
-            Scaled<
-              Tuned<
-                PhaseMod<
-                  DetunedSum<Const, Tri>,
-                  Scaled<Tuned<DetunedSum<Const, Tri>>>,
-                >,
-              >,
-            >,
-          >,
-        >,
-      >,
-    >,
-  >,
-> {
+) -> impl Signal {
   OnePoleLowPass::new(
     Modified(
       |x| 0.1f64.powf(1. - x),
@@ -61,23 +26,7 @@ pub fn meta_self_phase_mod_keys(
 pub fn bwaaa_distorted_phase_mod(
   frequency: f64,
   midi_listener: &MidiListener,
-) -> Sigmoid<
-  Scaled<
-    Wavefold<
-      Scaled<
-        OnePoleLowPass<
-          Modified<impl Fn(f64) -> f64, MidiModWheel>,
-          Tuned<
-            DetunedSum<
-              Const,
-              PhaseMod<Saw, Scaled<Tuned<PhaseMod<Sin, Tuned<Scaled<Tri>>>>>>,
-            >,
-          >,
-        >,
-      >,
-    >,
-  >,
-> {
+) -> impl Signal {
   Sigmoid(
     6. * Wavefold(
       8. * OnePoleLowPass::new(
@@ -99,23 +48,7 @@ pub fn bwaaa_distorted_phase_mod(
 pub fn distorted_fmod_keys(
   frequency: f64,
   midi_listener: &MidiListener,
-) -> Sigmoid<
-  Scaled<
-    OnePoleLowPass<
-      Modified<impl Fn(f64) -> f64, MidiModWheel>,
-      DetunedSum<
-        Const,
-        FreqMod<
-          FreqMod<
-            FreqMod<Tuned<Saw>, Pow<Const, Tuned<Saw>>>,
-            Pow<Const, Tuned<Saw>>,
-          >,
-          Pow<Const, Tuned<Saw>>,
-        >,
-      >,
-    >,
-  >,
-> {
+) -> impl Signal {
   Sigmoid(
     8. * OnePoleLowPass::new(
       Modified(
